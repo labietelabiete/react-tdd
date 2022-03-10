@@ -6,9 +6,16 @@ import Select from '@mui/material/Select'
 import Button from '@mui/material/Button'
 
 import {saveProduct} from '../services/productServices'
+import {
+  CREATED_STATUS,
+  ERROR_SERVER_STATUS,
+  INVALID_REQUEST_STATUS,
+} from '../consts/httpStatus'
 
 export const Form = () => {
   const [isSaving, setIsSaving] = useState(false)
+  const [isSuccess, setIsSuccess] = useState(false)
+  const [errorMessage, setErrorMessage] = useState('')
   const [formErrors, setFormErrors] = useState({
     name: '',
     size: '',
@@ -28,6 +35,27 @@ export const Form = () => {
     validateField({name: 'type', value: type})
   }
 
+  const getFormValues = ({name, size, type}) => ({
+    name: name.value,
+    size: size.value,
+    type: type.value,
+  })
+
+  const handleFetchErrors = async err => {
+    if (err.status === ERROR_SERVER_STATUS) {
+      setErrorMessage('Unexpected error, please try again')
+      return
+    }
+
+    if (err.status === INVALID_REQUEST_STATUS) {
+      const data = await err.json()
+      setErrorMessage(data.message)
+      return
+    }
+
+    setErrorMessage('Connection error, please try later')
+  }
+
   const handleSubmit = async e => {
     e.preventDefault()
 
@@ -35,10 +63,21 @@ export const Form = () => {
 
     const {name, size, type} = e.target.elements
 
-    validateForm({name: name.value, size: size.value, type: type.value})
+    validateForm(getFormValues({name, size, type}))
 
-    await saveProduct()
-    
+    try {
+      const response = await saveProduct(getFormValues({name, size, type}))
+
+      if (!response.ok) {
+        throw response
+      }
+      if (response.status === CREATED_STATUS) {
+        e.target.reset()
+        setIsSuccess(true)
+      }
+    } catch (err) {
+      handleFetchErrors(err)
+    }
     setIsSaving(false)
   }
 
@@ -50,6 +89,8 @@ export const Form = () => {
   return (
     <>
       <h1>Create product</h1>
+      {isSuccess && <p>Product Stored</p>}
+      <p>{errorMessage}</p>
 
       <form onSubmit={handleSubmit}>
         <TextField
@@ -69,7 +110,6 @@ export const Form = () => {
         <InputLabel htmlFor="type">Type</InputLabel>
         <Select
           native
-          value=""
           inputProps={{
             name: 'type',
             id: 'type',

@@ -4,16 +4,28 @@ import {rest} from 'msw'
 import {setupServer} from 'msw/node'
 
 import {Form} from './form'
+import {
+  CREATED_STATUS,
+  ERROR_SERVER_STATUS,
+  INVALID_REQUEST_STATUS,
+} from '../consts/httpStatus'
 
 const server = setupServer(
-  rest.post('/products', (req, res, ctx) => res(ctx.status(201))),
+  rest.post('/products', (req, res, ctx) => {
+    const {name, size, type} = req.body
+    if (name && size && type) {
+      return res(ctx.status(CREATED_STATUS))
+    }
+    return res(ctx.status(ERROR_SERVER_STATUS))
+  }),
 )
-
 beforeAll(() => server.listen())
 
 afterAll(() => server.close())
 
 beforeEach(() => render(<Form />))
+
+afterEach(() => server.resetHandlers())
 
 describe('when the form is mounted', () => {
   it('There must be a create product form page', () => {
@@ -75,7 +87,7 @@ describe('when the user blurs and empty field', () => {
 
 describe('when the user submits the form', () => {
   it('should the submit button be disabled until the request is done', async () => {
-    const submitBtn = screen.getByRole('button', { name: /submit/i });
+    const submitBtn = screen.getByRole('button', {name: /submit/i})
 
     expect(submitBtn).not.toBeDisabled()
 
@@ -83,8 +95,95 @@ describe('when the user submits the form', () => {
 
     expect(submitBtn).toBeDisabled()
 
+    await waitFor(() => expect(submitBtn).not.toBeDisabled())
+  })
+  it('he form page must display success message "Product stored" and clean fields values', async () => {
+    const submitBtn = screen.getByRole('button', {name: /submit/i})
+
+    const nameInput = screen.getByLabelText(/name/i)
+    const sizeInput = screen.getByLabelText(/size/i)
+    const typeSelect = screen.getByLabelText(/type/i)
+
+    fireEvent.change(nameInput, {
+      target: {name: 'name', value: 'my product'},
+    })
+    fireEvent.change(sizeInput, {
+      target: {name: 'name', value: '10'},
+    })
+    fireEvent.change(typeSelect, {
+      target: {name: 'name', value: 'electronic'},
+    })
+
+    expect(submitBtn).not.toBeDisabled()
+
+    fireEvent.click(submitBtn)
+
     await waitFor(() =>
-      expect(submitBtn).not.toBeDisabled(),
+      expect(screen.getByText(/product stored/i)).toBeInTheDocument(),
+    )
+
+    expect(nameInput).toHaveValue('')
+    expect(sizeInput).toHaveValue('')
+    expect(typeSelect).toHaveValue('')
+  })
+})
+
+describe('when the user submits the form and the server returns an unexpected error', () => {
+  it('display "Unexpected error, please try again"', async () => {
+    const submitBtn = screen.getByRole('button', {name: /submit/i})
+
+    fireEvent.click(submitBtn)
+
+    await waitFor(() =>
+      expect(
+        screen.getByText(/unexpected error, please try again/i),
+      ).toBeInTheDocument(),
+    )
+  })
+})
+
+describe('when the user submits the form and the server returns an invalid request error', () => {
+  it('the form page must display the error message "The form is invalid, the fields [field1...fieldN] are required"', async () => {
+    const submitBtn = screen.getByRole('button', {name: /submit/i})
+
+    server.use(
+      rest.post('/products', (req, res, ctx) => {
+        return res(
+          ctx.status(INVALID_REQUEST_STATUS),
+          ctx.json({
+            message:
+              'The form is invalid, the fields name, size, type are required',
+          }),
+        )
+      }),
+    )
+
+    fireEvent.click(submitBtn)
+
+    await waitFor(() =>
+      expect(
+        screen.getByText(
+          /the form is invalid, the fields name, size, type are required/i,
+        ),
+      ).toBeInTheDocument(),
+    )
+  })
+})
+describe('when the user submits the form and the server returns an invalid request error', () => {
+  const submitBtn = screen.getByRole('button', {name: /submit/i})
+  it('the form page must display the error message "The form is invalid, the fields [field1...fieldN] are required"', async () => {
+    server.use(
+      rest.post('/products', (req, res) =>
+        res.networkError('Failed to connect'),
+      ),
+    )
+
+    fireEvent.click(submitBtn)
+
+    await waitFor(() =>
+      expect(
+        screen.getByText(/connection error, please try later/i),
+      ).toBeInTheDocument(),
     )
   })
 })
