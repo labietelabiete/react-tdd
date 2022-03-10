@@ -1,13 +1,15 @@
-import React from 'react';
-import { screen, render } from '@testing-library/react';
+import React from 'react'
+import {screen, render, fireEvent} from '@testing-library/react'
 
-import {Form} from './form';
+import {Form} from './form'
 
 describe('when the form is mounted', () => {
-  beforeEach(() => render(<Form />));
+  beforeEach(() => render(<Form />))
 
   it('There must be a create product form page', () => {
-    expect(screen.getByRole('heading', {name: /create product/i})).toBeInTheDocument();
+    expect(
+      screen.getByRole('heading', {name: /create product/i}),
+    ).toBeInTheDocument()
   })
 
   it('should exists the fileds: name, size and type', () => {
@@ -18,9 +20,40 @@ describe('when the form is mounted', () => {
     expect(screen.queryByText(/electronic/i)).toBeInTheDocument()
     expect(screen.queryByText(/furniture/i)).toBeInTheDocument()
     expect(screen.queryByText(/clothing/i)).toBeInTheDocument()
-
   })
   it('should exists the submit button', () => {
     expect(screen.getByRole('button', {name: /submit/i})).toBeInTheDocument()
   })
+})
+describe('when the user submits the form without values', () => {
+  it('should display validation messages', () => {
+    render(<Form />)
+
+    expect(screen.queryByText(/the name is required/i)).not.toBeInTheDocument()
+    expect(screen.queryByText(/the size is required/i)).not.toBeInTheDocument()
+    expect(screen.queryByText(/the type is required/i)).not.toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', {name: /submit/i}))
+
+    expect(screen.queryByText(/the name is required/i)).toBeInTheDocument()
+    expect(screen.queryByText(/the size is required/i)).toBeInTheDocument()
+    expect(screen.queryByText(/the type is required/i)).toBeInTheDocument()
+  })
+})
+describe('when the user blurs and empty field', () => {
+  it('should display validation messages for the input name', () => {
+    render(<Form />);
+
+    fireEvent.blur(screen.getByLabelText(/name/i), { target: { name: 'name', value: '' } });
+
+    expect(screen.queryByText(/the name is required/i)).toBeInTheDocument()
+  })
+  it('should display validation messages for the input size', () => {
+    render(<Form />);
+
+    fireEvent.blur(screen.getByLabelText(/size/i), { target: { name: 'size', value: '' } });
+
+    expect(screen.queryByText(/the size is required/i)).toBeInTheDocument()
+  })
+
 })

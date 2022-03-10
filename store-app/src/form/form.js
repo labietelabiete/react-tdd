@@ -1,37 +1,84 @@
-import React from 'react';
+import React, {useState} from 'react'
+
 import TextField from '@mui/material/TextField'
 import InputLabel from '@mui/material/InputLabel'
 import Select from '@mui/material/Select'
 import Button from '@mui/material/Button'
 
+export const Form = () => {
+  const [formErrors, setFormErrors] = useState({
+    name: '',
+    size: '',
+    type: '',
+  })
 
-export const Form = () => (
-  <>
-    <h1>Create product</h1>
+  const handleSubmit = e => {
+    e.preventDefault()
 
-    <form>
-      <TextField label="name" id="name" />
+    const {name, size, type} = e.target.elements
 
-      <TextField label="size" id="size" />
+    if (!name.value) {
+      setFormErrors(prevState => ({...prevState, name: 'The name is required'}))
+    }
 
-      <InputLabel htmlFor="type">Type</InputLabel>
+    if (!size.value) {
+      setFormErrors(prevState => ({...prevState, size: 'The size is required'}))
+    }
 
-      <Select
-        native
-        value=""
-        inputProps={{
-          name: 'type',
-          id: 'type',
-        }}
-      >
-        <option aria-label="None" value="" />
-        <option value="electronic">Electronic</option>
-        <option value="furniture">Furniture</option>
-        <option value="clothing">Clothing</option>
-      </Select>
-      <Button>Submit</Button>
-    </form>
-  </>
-)
+    if (!type.value) {
+      setFormErrors(prevState => ({...prevState, type: 'The type is required'}))
+    }
+  }
 
-export default Form;
+  const handleBlur = e => {
+    const {name, value} = e.target
+
+    setFormErrors({
+      ...formErrors,
+      [name]: value.length ? '' : `The ${name} is required`,
+    })
+  }
+
+  return (
+    <>
+      <h1>Create product</h1>
+
+      <form onSubmit={handleSubmit}>
+        <TextField
+          label="name"
+          id="name"
+          name="name"
+          helperText={formErrors.name}
+          onBlur={handleBlur}
+        />
+        <TextField
+          label="size"
+          id="size"
+          name="size"
+          helperText={formErrors.size}
+          onBlur={handleBlur}
+        />
+        <InputLabel htmlFor="type">Type</InputLabel>
+        <Select
+          native
+          value=""
+          inputProps={{
+            name: 'type',
+            id: 'type',
+          }}
+        >
+          <option aria-label="None" value="" />
+          <option value="electronic">Electronic</option>
+          <option value="furniture">Furniture</option>
+          <option value="clothing">Clothing</option>
+        </Select>
+
+        {formErrors.type.length && <p>{formErrors.type}</p>}
+
+        <Button type="submit">Submit</Button>
+      </form>
+    </>
+  )
+}
+
+export default Form
