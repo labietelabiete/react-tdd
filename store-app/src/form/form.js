@@ -2,6 +2,8 @@ import React from 'react';
 import TextField from '@mui/material/TextField'
 import InputLabel from '@mui/material/InputLabel'
 import Select from '@mui/material/Select'
+import Button from '@mui/material/Button'
+
 
 export const Form = () => (
   <>
@@ -27,6 +29,7 @@ export const Form = () => (
         <option value="furniture">Furniture</option>
         <option value="clothing">Clothing</option>
       </Select>
+      <Button>Submit</Button>
     </form>
   </>
 )

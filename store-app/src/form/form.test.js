@@ -5,7 +5,7 @@ import {Form} from './form';
 
 describe('when the form is mounted', () => {
   beforeEach(() => render(<Form />));
-  
+
   it('There must be a create product form page', () => {
     expect(screen.getByRole('heading', {name: /create product/i})).toBeInTheDocument();
   })
@@ -19,5 +19,8 @@ describe('when the form is mounted', () => {
     expect(screen.queryByText(/furniture/i)).toBeInTheDocument()
     expect(screen.queryByText(/clothing/i)).toBeInTheDocument()
 
+  })
+  it('should exists the submit button', () => {
+    expect(screen.getByRole('button', {name: /submit/i})).toBeInTheDocument()
   })
 })
