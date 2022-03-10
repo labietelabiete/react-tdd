@@ -6,28 +6,36 @@ import Select from '@mui/material/Select'
 import Button from '@mui/material/Button'
 
 export const Form = () => {
+  const [isSaving, setIsSaving] = useState(false)
   const [formErrors, setFormErrors] = useState({
     name: '',
     size: '',
     type: '',
   })
 
-  const handleSubmit = e => {
+  const handleSubmit = async e => {
     e.preventDefault()
+
+    setIsSaving(true)
 
     const {name, size, type} = e.target.elements
 
     if (!name.value) {
       setFormErrors(prevState => ({...prevState, name: 'The name is required'}))
     }
-
     if (!size.value) {
       setFormErrors(prevState => ({...prevState, size: 'The size is required'}))
     }
-
     if (!type.value) {
       setFormErrors(prevState => ({...prevState, type: 'The type is required'}))
     }
+
+    await fetch('/products', {
+      method: 'POST',
+      body: JSON.stringify({}),
+    })
+
+    setIsSaving(false)
   }
 
   const handleBlur = e => {
@@ -72,10 +80,10 @@ export const Form = () => {
           <option value="furniture">Furniture</option>
           <option value="clothing">Clothing</option>
         </Select>
-
         {formErrors.type.length && <p>{formErrors.type}</p>}
-
-        <Button type="submit">Submit</Button>
+        <Button disabled={isSaving} type="submit">
+          Submit
+        </Button>
       </form>
     </>
   )
