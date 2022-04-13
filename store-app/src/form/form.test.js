@@ -170,8 +170,8 @@ describe('when the user submits the form and the server returns an invalid reque
   })
 })
 describe('when the user submits the form and the server returns an invalid request error', () => {
-  const submitBtn = screen.getByRole('button', {name: /submit/i})
-  it('the form page must display the error message "The form is invalid, the fields [field1...fieldN] are required"', async () => {
+  it('the form page must display the error message "Connection error, please try later"', async () => {
+    const submitBtn = screen.getByRole('button', {name: /submit/i})
     server.use(
       rest.post('/products', (req, res) =>
         res.networkError('Failed to connect'),
